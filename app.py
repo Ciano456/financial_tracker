@@ -1,4 +1,6 @@
 import sqlite3
+from flask import Flask, render_template, request, redirect, url_for
+
 
 DATABASE = 'financial_tracker.db'
 
@@ -33,27 +35,40 @@ def add_expense(date, category, amount, description):
 def get_expenses(): 
     conn = create_connection()
     with conn:
-        return conn.execute('''SELECT * FROM expenses''').fetchall()
+        result = conn.execute('''SELECT * FROM expenses''').fetchall()
     conn.close()
+    return result()
 
-def get_expense(id):
+def get_expense(expense_id):
     conn = create_connection()
     with conn:
-        return conn.execute('''select * from EXPENSES''').fetchall()
+        result = conn.execute('''select * from EXPENSES''', (expense_id)).fetchone()
     conn.close()
+    return result
+    
 
-    def delete_expense(id): 
-        conn = create_connection()
-        with conn: 
-            conn.execute('''DELETE FROM expenses where id = ? ''', (id))
-            conn.close()
-
-def update_expense(id, date, category, amount, description):
+def delete_expense(expense_id): 
     conn = create_connection()
     with conn: 
-        conn.execute('''UPDATE expenses SET date = ?, category = ?, date = ?, description = ? WHERE id = ?''', (date, category, amount, description, id))
-        conn.close()
+        conn.execute('''DELETE FROM expenses where expense_id = ? ''', (expense_id))
+    conn.close()
+    
+            
+
+def update_expense(expense_id, date, category, amount, description):
+    conn = create_connection()
+    with conn: 
+        conn.execute('''UPDATE expenses SET date = ?, category = ?, amount = ?, description = ? WHERE expense_id = ?''', (date, category, amount, description, expense_id))
+    conn.close()
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    expenses = get_expenses()
+    return render_template('index.html', expenses=expenses)
 
 if __name__ == '__main__':
     init_db()
     app.run(debug=True) 
+
